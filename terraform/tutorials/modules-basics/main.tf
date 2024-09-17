@@ -16,8 +16,8 @@ module "resource_group" {
   source  = "app.terraform.io/cheeseboy/resource-group/azurerm"
   version = "1.0.11"
 
-  resource_group_name = "rg-terraform-tutorial"
-  location            = "westus"
+  name     = "rg-terraform-tutorial"
+  location = "westus"
   tags = merge(var.required_tags, {
     environment = "dev"
   })
