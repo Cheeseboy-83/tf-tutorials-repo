@@ -5,11 +5,6 @@ terraform {
       version = "~>3.109"
     }
   }
-  backend "azurerm" {
-    key              = "modules-dynamic.tfstate"
-    use_oidc         = true
-    use_azuread_auth = true
-  }
 }
 
 provider "azurerm" {
