@@ -1,0 +1,170 @@
+name: Terraform Plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      lesson:
+        description: 'Select the lesson to run'
+        required: true
+        type: choice
+        options:
+          - modules-basics
+          - modules-dynamic
+
+env:
+  TF_LOG: INFO
+
+permissions:
+  id-token: write
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs: 
+  check-deployment:
+    runs-on: ubuntu-latest
+    steps:
+
+    # Log into Azure with OIDC
+    - name: 'Az CLI login'
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    # Run az commands to confirm subscription access
+    - name: 'Run az commands'
+      run: |
+        az account show
+    
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Fetch storage account resource group name from Azure Key Vault
+    - name: Fetch resource group name
+      id: fetch-rg-name
+      uses: azure/CLI@v2
+      with:
+        inlineScript: |
+          rgname=$(az keyvault secret show --name rgname --vault-name kv-terraform-config --query value -o tsv)
+          echo "rgname=$rgname" >> $GITHUB_OUTPUT
+          
+    # Fetch storage account name from the Azure Key Vault
+    - name: Fetch storage account name
+      id: fetch-storage-account-name
+      uses: azure/CLI@v2
+      with:
+        inlineScript: |
+          stname=$(az keyvault secret show --name stname --vault-name kv-terraform-config --query value -o tsv)
+          echo "stname=$stname" >> $GITHUB_OUTPUT
+
+    # Fetch storage account container name from the Azure Key Vault
+    - name: Fetch container name
+      id: fetch-container-name
+      uses: azure/CLI@v2
+      with:
+        inlineScript: |
+          contname=$(az keyvault secret show --name contname --vault-name kv-terraform-config --query value -o tsv)
+          echo "contname=$contname" >> $GITHUB_OUTPUT
+
+    # Fetch admin username from the Azure Key Vault
+    - name: Fetch admin username
+      id: fetch-admin-username
+      uses: azure/CLI@v2
+      with:
+        inlineScript: |
+          adminusername=$(az keyvault secret show --name adminUsername --vault-name kv-terraform-config --query value -o tsv)
+          echo "adminusername=$adminusername" >> $GITHUB_OUTPUT
+
+    # Fetch admin password from the Azure Key Vault
+    - name: Fetch admin password
+      id: fetch-admin-password
+      uses: azure/CLI@v2
+      with:
+        inlineScript: |
+          adminpassword=$(az keyvault secret show --name adminPassword --vault-name kv-terraform-config --query value -o tsv)
+          echo "adminpassword=$adminpassword" >> $GITHUB_OUTPUT
+
+    # Set Terraform Cloud token
+    - name: Set Terraform Cloud token
+      env:
+        TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+      run: echo "Terraform Cloud token set"
+
+    # Install the latest version of Terraform CLI 
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+
+    # Run Terraform init
+    - name: Terraform Init
+      id: init
+      working-directory: ./terraform/tutorials/${{ github.event.inputs.lesson }}
+      env:
+        STORAGE_ACCOUNT: ${{ steps.fetch-storage-account-name.outputs.stname }}
+        CONTAINER_NAME: ${{ steps.fetch-container-name.outputs.contname }}
+        RESOURCE_GROUP_NAME: ${{ steps.fetch-rg-name.outputs.rgname }}
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+      run: terraform init -backend-config="storage_account=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP_NAME" -upgrade
+
+    # Run a Terraform fmt
+    - name: Terraform format
+      id: fmt
+      working-directory: ./terraform/tutorials/${{ github.event.inputs.lesson }}
+      run: terraform fmt -check
+
+    # Run a Terraform validate
+    - name: Terraform validate
+      id: validate
+      working-directory: ./terraform/tutorials/${{ github.event.inputs.lesson }}
+      if: success() || failure()
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+      run: terraform validate -no-color
+
+    # Run a Terraform plan
+    - name: Terraform plan
+      id: plan
+      working-directory: ./terraform/tutorials/${{ github.event.inputs.lesson }}
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+      run: terraform plan -no-color -var="admin_password=${{ steps.fetch-admin-password.outputs.adminpassword }}" -var="admin_username=${{ steps.fetch-admin-username.outputs.adminusername }}" -out=tfplan
+
+    # Add a comment to pull requests with plan results
+    - name: Add Plan Comment
+      id: comment
+      uses: actions/github-script@v6
+      env:
+        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Format and Style \`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization \`${{ steps.init.outcome }}\`
+          #### Terraform Validation ${{ steps.validate.outputs.stdout }}
+          #### Terraform Plan \`${{ steps.plan.outcome }}\`
+      
+          <details><summary>Show Plan</summary>
+          
+          \`\`\`${process.env.PLAN}\`\`\`
+          
+          </details>
+          
+          *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
