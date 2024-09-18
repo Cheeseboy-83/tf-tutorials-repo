@@ -15,7 +15,7 @@ provider "azurerm" {
 module "resource_group" {
   source   = "app.terraform.io/cheeseboy/resource-group/azurerm"
   version  = "1.0.11"
-  for_each = { for key, value in var.var.resource_groups : key => value }
+  for_each = { for key, value in var.resource_groups : key => value }
 
   name     = each.value.name
   location = each.value.location
