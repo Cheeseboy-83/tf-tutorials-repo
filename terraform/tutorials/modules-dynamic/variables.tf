@@ -12,6 +12,6 @@ variable "resource_groups" {
     location = string
     tags     = optional(map(string))
   }))
-  default = {}
+  default     = {}
   description = "Resource groups in the deployment"
 }
