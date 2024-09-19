@@ -8,7 +8,7 @@ terraform {
   cloud {
     organization = "cheeseboy"
     workspaces {
-      name = "tf-tutorials-repo-modules-dynamic"
+      name = "modules-integrated"
     }
   }
 }
