@@ -23,5 +23,6 @@ variable "network_watchers" {
     location = optional(string)
     tags     = optional(map(string))
   }))
+  default     = {}
   description = "Resource groups in the deployment"
 }
