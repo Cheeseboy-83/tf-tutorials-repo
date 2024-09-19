@@ -8,7 +8,7 @@ terraform {
   cloud {
     organization = "cheeseboy"
     workspaces {
-      name = "modules-dynamic"
+      name = "modules-integrated"
     }
   }
 }
@@ -20,10 +20,21 @@ provider "azurerm" {
 
 module "resource_group" {
   source   = "app.terraform.io/cheeseboy/resource-group/azurerm"
-  version  = "1.0.11"
+  version  = "1.0.13"
   for_each = { for key, value in var.resource_groups : key => value }
 
   name     = each.value.name
   location = each.value.location
   tags     = merge(var.required_tags, each.value.tags)
+}
+
+module "network-watcher" {
+  source   = "app.terraform.io/cheeseboy/network-watcher/azurerm"
+  version  = "0.1.2"
+  for_each = { for key, value in var.resource_groups : key => value }
+
+  name                = each.value.name
+  resource_group_name = module.resource_group[each.value.rg_key].name
+  location            = module.resource_group[each.value.rg_key].location
+  tags                = merge(var.required_tags, each.value.tags)
 }

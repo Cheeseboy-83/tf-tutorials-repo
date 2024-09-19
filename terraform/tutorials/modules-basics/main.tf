@@ -5,6 +5,12 @@ terraform {
       version = "~>3.109"
     }
   }
+  cloud {
+    organization = "cheeseboy"
+    workspaces {
+      name = "modules-basic"
+    }
+  }
 }
 
 provider "azurerm" {
