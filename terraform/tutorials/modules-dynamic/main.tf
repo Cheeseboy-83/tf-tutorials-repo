@@ -5,6 +5,12 @@ terraform {
       version = "~>3.109"
     }
   }
+  cloud {
+    organization = "cheeseboy"
+    workspaces {
+      name = "tf-tutorials-repo-modules-dynamic"
+    }
+  }
 }
 
 provider "azurerm" {
