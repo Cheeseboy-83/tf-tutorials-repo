@@ -31,7 +31,7 @@ module "resource_group" {
 module "network-watcher" {
   source   = "app.terraform.io/cheeseboy/network-watcher/azurerm"
   version  = "0.1.2"
-  for_each = { for key, value in var.resource_groups : key => value }
+  for_each = { for key, value in var.network_watchers : key => value }
 
   name                = each.value.name
   resource_group_name = module.resource_group[each.value.rg_key].name
