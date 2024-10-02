@@ -57,3 +57,30 @@ variable "virtual_networks" {
   }))
   default = {}
 }
+
+variable "subnets" {
+  description = "Subnets in the deployment"
+  type = map(objects({
+    name             = string
+    rg_key           = string
+    vnet_key         = string
+    address_prefixes = list(string)
+
+    default_outbound_access_enabled       = optional(bool)
+    private_endpoint_network_policies     = optional(string)
+    private_link_service_network_policies = optional(bool)
+    service_endpoints                     = optional(list(string))
+    service_endpoint_policy_ids           = optional(list(string))
+
+    delegation = optional(object({
+      name = string
+      service_delegation = list(object({
+        name    = string
+        actions = list(string)
+      }))
+    }))
+
+    tags = optional(map(string))
+  }))
+  default = {}
+}
