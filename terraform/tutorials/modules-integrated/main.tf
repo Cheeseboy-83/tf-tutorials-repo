@@ -45,7 +45,7 @@ module "virtual_network" {
 
 module "subnet" {
   source   = "app.terraform.io/cheeseboy/subnet/azurerm"
-  version  = "0.1.9"
+  version  = "0.1.10"
   for_each = { for key, value in var.subnets : key => value }
 
   name                 = each.value.name
