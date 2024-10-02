@@ -60,7 +60,7 @@ variable "virtual_networks" {
 
 variable "subnets" {
   description = "Subnets in the deployment"
-  type = map(objects({
+  type = map(object({
     name             = string
     rg_key           = string
     vnet_key         = string
