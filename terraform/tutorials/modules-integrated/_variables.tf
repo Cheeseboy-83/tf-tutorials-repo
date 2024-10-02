@@ -73,11 +73,11 @@ variable "subnets" {
     service_endpoint_policy_ids                   = optional(list(string))
 
     delegation = optional(object({
-      name = string
-      service_delegation = list(object({
-        name    = string
-        actions = list(string)
-      }))
+      name = optional(string)
+      service_delegation = optional(list(object({
+        name    = optional(string)
+        actions = optional(list(string))
+      })))
     }))
 
     tags = optional(map(string))
