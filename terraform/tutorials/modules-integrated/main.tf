@@ -45,7 +45,7 @@ module "virtual_network" {
 
 module "subnet" {
   source   = "app.terraform.io/cheeseboy/subnet/azurerm"
-  version  = "0.1.3"
+  version  = "0.1.4"
   for_each = { for key, value in var.subnets : key => value }
 
   name                 = each.value.name
@@ -59,5 +59,5 @@ module "subnet" {
   service_endpoints                             = lookup(each.value, "service_endpoints", [])
   service_endpoint_policy_ids                   = lookup(each.value, "service_endpoint_policy_ids", [])
 
-  delegation = lookup(each.value, "delegation", null)
+  # delegation = lookup(each.value, "delegation", null)
 }
