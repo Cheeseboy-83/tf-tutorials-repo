@@ -45,7 +45,7 @@ module "virtual_network" {
 
 module "subnet" {
   source   = "app.terraform.io/cheeseboy/subnet/azurerm"
-  version  = "0.1.0"
+  version  = "0.1.1"
   for_each = { for key, value in var.subnets : key => value }
 
   name                 = each.value.name
@@ -53,11 +53,11 @@ module "subnet" {
   virtual_network_name = module.virtual_network[each.value.vnet_key].name
   address_prefixes     = each.value.address_prefixes
 
-  default_outbound_access_enabled       = coalesce(each.value.default_outbound_access_enabled, true)
-  private_endpoint_network_policies     = lookup(each.value, "private_endpoint_network_policies", "Enabled")
-  private_link_service_network_policies = coalesce(each.value.private_link_service_network_policies, true)
-  service_endpoints                     = lookup(each.value, "service_endpoints", [])
-  service_endpoint_policy_ids           = lookup(each.value, "service_endpoint_policy_ids", [])
+  default_outbound_access_enabled               = coalesce(each.value.default_outbound_access_enabled, true)
+  private_endpoint_network_policies             = lookup(each.value, "private_endpoint_network_policies", "Enabled")
+  private_link_service_network_policies_enabled = coalesce(each.value.private_link_service_network_policies_enabled, true)
+  service_endpoints                             = lookup(each.value, "service_endpoints", [])
+  service_endpoint_policy_ids                   = lookup(each.value, "service_endpoint_policy_ids", [])
 
   delegation = lookup(each.value, "delegation", null)
 }

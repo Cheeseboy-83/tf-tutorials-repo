@@ -66,11 +66,11 @@ variable "subnets" {
     vnet_key         = string
     address_prefixes = list(string)
 
-    default_outbound_access_enabled       = optional(bool)
-    private_endpoint_network_policies     = optional(string)
-    private_link_service_network_policies = optional(bool)
-    service_endpoints                     = optional(list(string))
-    service_endpoint_policy_ids           = optional(list(string))
+    default_outbound_access_enabled               = optional(bool)
+    private_endpoint_network_policies             = optional(string)
+    private_link_service_network_policies_enabled = optional(bool)
+    service_endpoints                             = optional(list(string))
+    service_endpoint_policy_ids                   = optional(list(string))
 
     delegation = optional(object({
       name = string
