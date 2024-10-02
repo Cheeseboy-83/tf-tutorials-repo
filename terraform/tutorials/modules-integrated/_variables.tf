@@ -50,7 +50,7 @@ variable "virtual_networks" {
     }))
 
     encryption = optional(object({
-      enable = bool
+      enforcement = bool
     }))
 
     tags = optional(map(string))
