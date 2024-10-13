@@ -75,8 +75,8 @@ variable "subnets" {
     delegation = optional(object({
       name = string
       service_delegation = optional(object({
-        name    = optional(string)
-        actions = optional(list(string))
+        name    = string
+        actions = list(string)
       }))
     }))
 
