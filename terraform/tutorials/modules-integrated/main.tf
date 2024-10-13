@@ -61,7 +61,3 @@ module "subnet" {
 
   delegation = lookup(each.value, "delegation", {})
 }
-
-output "subnet_pe_network_policies" {
-  value = module.subnet["subnet1"].private_endpoint_network_policies
-}
